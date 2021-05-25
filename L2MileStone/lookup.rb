@@ -27,21 +27,15 @@ dns_raw = File.readlines("zone")
 =end
 
 def parse_dns(dns_raw)
-
-  dns_raw = dns_raw.reject do |x|
-    (x[0].eql?("#") == true) ||  (x[0].eql?("\n") == true)
+  dns_raw.reject do |x|
+    (x[0].eql?("#")) || (x[0].eql?("\n"))
   end
-
-  dns_raw = dns_raw.map do |x|
-    x.split(", ")
+    .map do |x|
+    x.strip().split(", ")
   end
-
-  dns_records = {}
-  dns_raw.each do |x|
-    dns_records[x[1]] = x[2]
+    .each_with_object({}) do |record, records|
+    records[record[1]] = { type: record[0], target: record[2] }
   end
-
-  dns_records
 end
 
 =begin
@@ -52,25 +46,19 @@ end
 =end
 
 def resolve(dns_records, lookup_chain, domain)
-
-  if dns_records[domain] == nil
+  record = dns_records[domain]
+  if (!record)
     lookup_chain.pop()
-    return lookup_chain.append("Error: record not found for #{domain}")
-  end
-
-
-  length_of_ip = dns_records[domain].length
-  if dns_records[domain][length_of_ip-2].match?(/[[:digit:]]/)
-    lookup_chain.append(dns_records[domain])
-    return lookup_chain
-
+    lookup_chain << "Error: record not found for " + domain
+  elsif record[:type] == "CNAME"
+    lookup_chain.append(record[:target])
+    resolve(dns_records, lookup_chain, lookup_chain.last)
+  elsif record[:type] == "A"
+    lookup_chain.append(record[:target])
   else
-    lookup_chain.append(dns_records[domain].strip())
-    return resolve(dns_records, lookup_chain, lookup_chain.last)
+    lookup_chain << "Invalid record type for " + domain
   end
-
 end
-
 
 # To complete the assignment, implement `parse_dns` and `resolve`.
 # Remember to implement them above this line since in Ruby
