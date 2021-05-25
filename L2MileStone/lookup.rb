@@ -27,13 +27,9 @@ dns_raw = File.readlines("zone")
 =end
 
 def parse_dns(dns_raw)
-  dns_raw.reject do |x|
-    (x[0].eql?("#")) || (x[0].eql?("\n"))
-  end
-    .map do |x|
-    x.strip().split(", ")
-  end
-    .each_with_object({}) do |record, records|
+  dns_raw.reject { |x| (x[0] == "#") || (x[0] == "\n") }.
+    map { |x| x.strip().split(", ") }.
+    each_with_object({}) do |record, records|
     records[record[1]] = { type: record[0], target: record[2] }
   end
 end
@@ -56,6 +52,7 @@ def resolve(dns_records, lookup_chain, domain)
   elsif record[:type] == "A"
     lookup_chain.append(record[:target])
   else
+    lookup_chain.pop()
     lookup_chain << "Invalid record type for " + domain
   end
 end
