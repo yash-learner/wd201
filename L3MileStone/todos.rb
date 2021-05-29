@@ -7,18 +7,26 @@ class Todo
     @completed = completed
   end
 
-  def due_date
-    @due_date
+  def overdue?
+    Date.today > @due_date
+  end
+
+  def due_today?
+    Date.today == @due_date
+  end
+
+  def due_later?
+    Date.today < @due_date
   end
 
   def to_displayable_string
-    "#{@completed ? "[X]" : "[ ]"} #{@text} #{@due_date == Date.today ? nil : @due_date}"
+    display_status = @completed ? "[X]" : "[ ]"
+    display_date = @due_date == Date.today ? nil : @due_date
+    "#{display_status} #{@text} #{display_date}"
   end
 end
 
 class TodosList
-  @@date = Date.today
-
   def initialize(todos)
     @todos = todos
   end
@@ -28,15 +36,15 @@ class TodosList
   end
 
   def overdue
-    TodosList.new(@todos.filter { |todo| todo.due_date < @@date })
+    TodosList.new(@todos.filter { |todo| todo.overdue? })
   end
 
   def due_today
-    TodosList.new(@todos.filter { |todo| todo.due_date == @@date })
+    TodosList.new(@todos.filter { |todo| todo.due_today? })
   end
 
   def due_later
-    TodosList.new(@todos.filter { |todo| todo.due_date > @@date })
+    TodosList.new(@todos.filter { |todo| todo.due_later? })
   end
 
   def to_displayable_list
